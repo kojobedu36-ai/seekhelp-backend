@@ -137,4 +137,4 @@ router.post("/replyComment", async (req, res) => {
   }
 });
 
-module.exports =
+module.exports = router;
