@@ -72,7 +72,10 @@ router.delete("/delete/:id", authenticate, async (req, res) => {
     await pool.query("DELETE FROM comments WHERE post_id=$1", [id]);
     await pool.query("DELETE FROM notifications WHERE source_id=$1 AND type IN ('like_post','comment_post')", [id]);
 
-    const result = await pool.query("DELETE FROM posts WHERE post_id=$1 AND user_id=$2 RETURNING *", [id, user_id]);
+    const result = await pool.query(
+      "DELETE FROM posts WHERE post_id=$1 AND user_id=$2 RETURNING *",
+      [id, user_id]
+    );
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: "Post not found or not owned by you" });
@@ -88,4 +91,5 @@ router.delete("/delete/:id", authenticate, async (req, res) => {
   }
 });
 
-// ✅ Likes, comments, replies remain the same (can also be protected later)
+// ✅ Export router so server.js can use it
+module.exports = router;
