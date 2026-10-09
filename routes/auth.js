@@ -1,51 +1,48 @@
 const express = require("express");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
 const pool = require("../db");
-const router = express.Router();
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
-// Register
-router.post("/register", async (req, res) => {
+const router = express.Router();
+const SECRET = process.env.JWT_SECRET || "supersecretkey"; // set in .env
+
+// ✅ Signup
+router.post("/signup", async (req, res) => {
   const { username, email, password } = req.body;
   try {
-    if (!username || !email || !password) {
-      return res.status(400).json({ error: "All fields are required" });
-    }
-    if (password.length < 6) {
-      return res.status(400).json({ error: "Password must be at least 6 characters" });
-    }
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    const hash = await bcrypt.hash(password, 10);
-    const user = await pool.query(
-      "INSERT INTO Users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING *",
-      [username, email, hash]
+    const result = await pool.query(
+      "INSERT INTO users (username, email, password_hash, created_at) VALUES ($1, $2, $3, NOW()) RETURNING user_id, username, email",
+      [username, email, hashedPassword]
     );
 
-    res.json(user.rows[0]);
+    res.json(result.rows[0]);
   } catch (err) {
+    console.error(err);
     res.status(400).json({ error: err.message });
   }
 });
 
-// Login
+// ✅ Login
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
   try {
-    const result = await pool.query("SELECT * FROM Users WHERE email=$1", [email]);
+    const result = await pool.query("SELECT * FROM users WHERE email=$1", [email]);
+    if (result.rows.length === 0) {
+      return res.status(400).json({ error: "User not found" });
+    }
+
     const user = result.rows[0];
-    if (!user) return res.status(400).json({ error: "User not found" });
-
     const valid = await bcrypt.compare(password, user.password_hash);
-    if (!valid) return res.status(400).json({ error: "Invalid password" });
+    if (!valid) {
+      return res.status(400).json({ error: "Invalid password" });
+    }
 
-    const token = jwt.sign(
-      { user_id: user.user_id, username: user.username },
-      process.env.JWT_SECRET,
-      { expiresIn: "1h" }
-    );
-
-    res.json({ token });
+    const token = jwt.sign({ user_id: user.user_id }, SECRET, { expiresIn: "1h" });
+    res.json({ token, user: { user_id: user.user_id, username: user.username, email: user.email } });
   } catch (err) {
+    console.error(err);
     res.status(400).json({ error: err.message });
   }
 });
