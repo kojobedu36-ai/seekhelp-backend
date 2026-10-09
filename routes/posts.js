@@ -20,7 +20,7 @@ router.post("/like", async (req, res) => {
   const { user_id, post_id } = req.body;
   try {
     const like = await pool.query(
-      `INSERT INTO PostLikes (user_id, post_id) 
+      `INSERT INTO postlikes (user_id, post_id) 
        VALUES ($1, $2) 
        ON CONFLICT (user_id, post_id) DO NOTHING 
        RETURNING *`,
@@ -28,11 +28,11 @@ router.post("/like", async (req, res) => {
     );
 
     if (like.rows.length > 0) {
-      const post = await pool.query("SELECT user_id FROM Posts WHERE post_id=$1", [post_id]);
+      const post = await pool.query("SELECT user_id FROM posts WHERE post_id=$1", [post_id]);
       const postOwner = post.rows[0].user_id;
 
       const notif = await pool.query(
-        `INSERT INTO Notifications (user_id, type, source_id, triggered_by) 
+        `INSERT INTO notifications (user_id, type, source_id, triggered_by) 
          VALUES ($1, $2, $3, $4) RETURNING *`,
         [postOwner, "like_post", post_id, user_id]
       );
@@ -53,15 +53,15 @@ router.post("/comment", async (req, res) => {
   const { user_id, post_id, content } = req.body;
   try {
     const comment = await pool.query(
-      "INSERT INTO Comments (user_id, post_id, content) VALUES ($1, $2, $3) RETURNING *",
+      "INSERT INTO comments (user_id, post_id, content) VALUES ($1, $2, $3) RETURNING *",
       [user_id, post_id, content]
     );
 
-    const post = await pool.query("SELECT user_id FROM Posts WHERE post_id=$1", [post_id]);
+    const post = await pool.query("SELECT user_id FROM posts WHERE post_id=$1", [post_id]);
     const postOwner = post.rows[0].user_id;
 
     const notif = await pool.query(
-      `INSERT INTO Notifications (user_id, type, source_id, triggered_by) 
+      `INSERT INTO notifications (user_id, type, source_id, triggered_by) 
        VALUES ($1, $2, $3, $4) RETURNING *`,
       [postOwner, "comment_post", comment.rows[0].comment_id, user_id]
     );
@@ -81,7 +81,7 @@ router.post("/likeComment", async (req, res) => {
   const { user_id, comment_id } = req.body;
   try {
     const like = await pool.query(
-      `INSERT INTO CommentLikes (user_id, comment_id) 
+      `INSERT INTO commentlikes (user_id, comment_id) 
        VALUES ($1, $2) 
        ON CONFLICT (user_id, comment_id) DO NOTHING 
        RETURNING *`,
@@ -89,11 +89,11 @@ router.post("/likeComment", async (req, res) => {
     );
 
     if (like.rows.length > 0) {
-      const comment = await pool.query("SELECT user_id FROM Comments WHERE comment_id=$1", [comment_id]);
+      const comment = await pool.query("SELECT user_id FROM comments WHERE comment_id=$1", [comment_id]);
       const commentOwner = comment.rows[0].user_id;
 
       const notif = await pool.query(
-        `INSERT INTO Notifications (user_id, type, source_id, triggered_by) 
+        `INSERT INTO notifications (user_id, type, source_id, triggered_by) 
          VALUES ($1, $2, $3, $4) RETURNING *`,
         [commentOwner, "like_comment", comment_id, user_id]
       );
@@ -114,15 +114,15 @@ router.post("/replyComment", async (req, res) => {
   const { user_id, comment_id, content } = req.body;
   try {
     const reply = await pool.query(
-      "INSERT INTO CommentReplies (user_id, comment_id, content) VALUES ($1, $2, $3) RETURNING *",
+      "INSERT INTO commentreplies (user_id, comment_id, content) VALUES ($1, $2, $3) RETURNING *",
       [user_id, comment_id, content]
     );
 
-    const comment = await pool.query("SELECT user_id FROM Comments WHERE comment_id=$1", [comment_id]);
+    const comment = await pool.query("SELECT user_id FROM comments WHERE comment_id=$1", [comment_id]);
     const commentOwner = comment.rows[0].user_id;
 
     const notif = await pool.query(
-      `INSERT INTO Notifications (user_id, type, source_id, triggered_by) 
+      `INSERT INTO notifications (user_id, type, source_id, triggered_by) 
        VALUES ($1, $2, $3, $4) RETURNING *`,
       [commentOwner, "reply_comment", reply.rows[0].reply_id, user_id]
     );
