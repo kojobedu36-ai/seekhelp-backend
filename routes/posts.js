@@ -2,6 +2,19 @@ const express = require("express");
 const pool = require("../db");
 const router = express.Router();
 
+// ✅ Get all posts (public for now)
+router.get("/", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT * FROM Posts ORDER BY created_at DESC"
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 // Like a post
 router.post("/like", async (req, res) => {
   const { user_id, post_id } = req.body;
@@ -26,7 +39,7 @@ router.post("/like", async (req, res) => {
 
       const io = req.app.get("io");
       io.to(postOwner.toString()).emit("receiveNotification", notif.rows[0]);
-      io.emit("newLike", { post_id, user_id }); // real-time feed update
+      io.emit("newLike", { post_id, user_id });
     }
 
     res.json(like.rows[0] || { message: "Already liked" });
@@ -55,7 +68,7 @@ router.post("/comment", async (req, res) => {
 
     const io = req.app.get("io");
     io.to(postOwner.toString()).emit("receiveNotification", notif.rows[0]);
-    io.emit("newComment", { post_id, comment: comment.rows[0] }); // real-time feed update
+    io.emit("newComment", { post_id, comment: comment.rows[0] });
 
     res.json(comment.rows[0]);
   } catch (err) {
@@ -87,7 +100,7 @@ router.post("/likeComment", async (req, res) => {
 
       const io = req.app.get("io");
       io.to(commentOwner.toString()).emit("receiveNotification", notif.rows[0]);
-      io.emit("newLikeComment", { comment_id, user_id }); // real-time feed update
+      io.emit("newLikeComment", { comment_id, user_id });
     }
 
     res.json(like.rows[0] || { message: "Already liked" });
@@ -116,7 +129,7 @@ router.post("/replyComment", async (req, res) => {
 
     const io = req.app.get("io");
     io.to(commentOwner.toString()).emit("receiveNotification", notif.rows[0]);
-    io.emit("newReply", { comment_id, reply: reply.rows[0] }); // real-time feed update
+    io.emit("newReply", { comment_id, reply: reply.rows[0] });
 
     res.json(reply.rows[0]);
   } catch (err) {
