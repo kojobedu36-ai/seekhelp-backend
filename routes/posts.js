@@ -6,7 +6,7 @@ const router = express.Router();
 router.get("/", async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT * FROM Posts ORDER BY created_at DESC"
+      "SELECT * FROM posts ORDER BY created_at DESC"
     );
     res.json(result.rows);
   } catch (err) {
