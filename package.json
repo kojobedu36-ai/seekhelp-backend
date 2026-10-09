@@ -1,18 +1,19 @@
 {
   "name": "seekhelp-backend",
   "version": "1.0.0",
-  "description": "",
-  "main": "db.js",
+  "description": "SeekHelp backend server",
+  "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/kojobedu36-ai/seekhelp-backend.git"
   },
   "keywords": [],
-  "author": "",
+  "author": "Kojo",
   "license": "ISC",
   "type": "commonjs",
   "bugs": {
@@ -20,7 +21,6 @@
   },
   "homepage": "https://github.com/kojobedu36-ai/seekhelp-backend#readme",
   "dependencies": {
-    "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^18.0.6",
@@ -28,5 +28,8 @@
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.23.1",
     "socket.io": "^4.8.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
   }
 }
