@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/kojobedu36-ai/seekhelp-backend#readme",
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^18.0.6",
     "express": "^5.2.1",
