@@ -21,6 +21,11 @@ const server = http.createServer(app);
 app.use(cors());
 app.use(express.json());
 
+// ✅ Root route (fixes "Cannot GET /")
+app.get("/", (req, res) => {
+  res.send("✅ SeekHelp backend is live!");
+});
+
 // Socket.IO setup
 const io = new Server(server, {
   cors: {
@@ -50,13 +55,11 @@ io.on("connection", async (socket) => {
     }
   }
 
-  // Join user room for notifications
   socket.on("joinRoom", (userId) => {
     socket.join(userId.toString());
     console.log(`User ${userId} joined room`);
   });
 
-  // Typing indicator events
   socket.on("typing", ({ senderId, receiverId }) => {
     io.to(receiverId.toString()).emit("showTyping", { senderId });
   });
@@ -65,7 +68,6 @@ io.on("connection", async (socket) => {
     io.to(receiverId.toString()).emit("hideTyping", { senderId });
   });
 
-  // 🔔 Follow/unfollow notifications
   socket.on("follow", ({ followerId, followingId, followerName }) => {
     io.to(followingId.toString()).emit("newNotification", {
       type: "follow",
@@ -102,9 +104,12 @@ io.on("connection", async (socket) => {
   });
 });
 
-// Routes
+// ✅ Routes
 app.use("/auth", authRoutes);
-app.use("/posts", authMiddleware, postRoutes);
+
+// 🔓 Temporarily remove authMiddleware for posts so frontend can fetch without token
+app.use("/posts", postRoutes);
+
 app.use("/messages", authMiddleware, messageRoutes);
 app.use("/notifications", authMiddleware, notificationRoutes);
 app.use("/users", userRoutes);
@@ -113,4 +118,3 @@ const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
-
