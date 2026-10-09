@@ -107,7 +107,7 @@ io.on("connection", async (socket) => {
 // ✅ Routes
 app.use("/auth", authRoutes);
 
-// 🔓 Temporarily remove authMiddleware for posts so frontend can fetch without token
+// 🔓 Posts route open (no token required for now)
 app.use("/posts", postRoutes);
 
 app.use("/messages", authMiddleware, messageRoutes);
