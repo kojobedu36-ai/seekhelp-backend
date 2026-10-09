@@ -2,7 +2,26 @@ const express = require("express");
 const pool = require("../db");
 const router = express.Router();
 
-// ✅ Get all posts (public for now)
+// ✅ Create a new post
+router.post("/create", async (req, res) => {
+  const { user_id, content } = req.body;
+  try {
+    const result = await pool.query(
+      "INSERT INTO posts (user_id, content, created_at) VALUES ($1, $2, NOW()) RETURNING *",
+      [user_id, content]
+    );
+
+    const io = req.app.get("io");
+    io.emit("newPost", result.rows[0]);
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// ✅ Get all posts
 router.get("/", async (req, res) => {
   try {
     const result = await pool.query(
@@ -15,7 +34,55 @@ router.get("/", async (req, res) => {
   }
 });
 
-// Like a post
+// ✅ Update a post
+router.put("/update/:id", async (req, res) => {
+  const { id } = req.params;
+  const { content } = req.body;
+  try {
+    const result = await pool.query(
+      "UPDATE posts SET content=$1 WHERE post_id=$2 RETURNING *",
+      [content, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+
+    const io = req.app.get("io");
+    io.emit("updatePost", result.rows[0]);
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// ✅ Delete a post
+router.delete("/delete/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    await pool.query("DELETE FROM postlikes WHERE post_id=$1", [id]);
+    await pool.query("DELETE FROM comments WHERE post_id=$1", [id]);
+    await pool.query("DELETE FROM notifications WHERE source_id=$1 AND type IN ('like_post','comment_post')", [id]);
+
+    const result = await pool.query("DELETE FROM posts WHERE post_id=$1 RETURNING *", [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+
+    const io = req.app.get("io");
+    io.emit("deletePost", { post_id: id });
+
+    res.json({ message: "Post deleted successfully", post: result.rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// ✅ Like a post
 router.post("/like", async (req, res) => {
   const { user_id, post_id } = req.body;
   try {
@@ -48,7 +115,7 @@ router.post("/like", async (req, res) => {
   }
 });
 
-// Comment on a post
+// ✅ Comment on a post
 router.post("/comment", async (req, res) => {
   const { user_id, post_id, content } = req.body;
   try {
@@ -76,7 +143,7 @@ router.post("/comment", async (req, res) => {
   }
 });
 
-// Like a comment
+// ✅ Like a comment
 router.post("/likeComment", async (req, res) => {
   const { user_id, comment_id } = req.body;
   try {
@@ -109,7 +176,7 @@ router.post("/likeComment", async (req, res) => {
   }
 });
 
-// Reply to a comment
+// ✅ Reply to a comment
 router.post("/replyComment", async (req, res) => {
   const { user_id, comment_id, content } = req.body;
   try {
